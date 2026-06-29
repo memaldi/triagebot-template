@@ -2,7 +2,7 @@ import logging
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.requests import Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from app import classifier, db
@@ -52,6 +52,25 @@ def update_ticket(ticket_id: int, payload: TicketUpdate) -> dict:
         logger.error("PATCH /tickets/%s — ticket not found", ticket_id)
         raise HTTPException(status_code=404, detail="Ticket not found")
     return ticket
+
+
+@app.delete("/tickets/{ticket_id}", status_code=204)
+def delete_ticket(ticket_id: int) -> Response:
+    deleted = db.delete_ticket(ticket_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    return Response(status_code=204)
+
+
+@app.get("/tickets/{ticket_id}", response_class=HTMLResponse)
+def ticket_detail(request: Request, ticket_id: int) -> HTMLResponse:
+    ticket = db.get_ticket(ticket_id)
+    if ticket is None:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    return templates.TemplateResponse(
+        "ticket_detail.html",
+        {"request": request, "ticket": ticket},
+    )
 
 
 @app.get("/tickets-table", response_class=HTMLResponse)

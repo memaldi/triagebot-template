@@ -31,6 +31,8 @@ class TicketCreate(BaseModel):
 class TicketUpdate(BaseModel):
     status: str | None = None
     priority: str | None = None
+    category: str | None = None
+    tags: list[str] | None = None
 
     @field_validator("status")
     @classmethod
@@ -44,6 +46,20 @@ class TicketUpdate(BaseModel):
     def validate_priority(cls, v: str | None) -> str | None:
         if v is not None and v not in ALLOWED_PRIORITIES:
             raise ValueError(f"priority must be one of {ALLOWED_PRIORITIES}")
+        return v
+
+    @field_validator("category")
+    @classmethod
+    def validate_category(cls, v: str | None) -> str | None:
+        if v is not None and v not in ALLOWED_CATEGORIES:
+            raise ValueError(f"category must be one of {ALLOWED_CATEGORIES}")
+        return v
+
+    @field_validator("tags")
+    @classmethod
+    def validate_tags(cls, v: list[str] | None) -> list[str] | None:
+        if v is not None and not isinstance(v, list):
+            raise ValueError("tags must be a list of strings")
         return v
 
 

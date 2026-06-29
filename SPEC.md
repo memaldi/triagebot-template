@@ -35,6 +35,15 @@ Valores por defecto:
 2. Tablero de tickets.
 3. Filtros por categoría, prioridad y estado.
 
+`GET /{id}` devuelve una página HTML con:
+
+1. Detalles del ticket.
+2. Formulario para modificar el ticket.
+3. Formulario para cambiar el estado, la categoría y los tags del ticket.
+4. Botón para eliminar el ticket.
+
+`DELETE /{id}` elimina el ticket seleccionado.
+
 Recomendación:
 
 - Usar Jinja2 templates.
