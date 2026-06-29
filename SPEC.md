@@ -34,6 +34,7 @@ Valores por defecto:
 1. Formulario para crear ticket.
 2. Tablero de tickets.
 3. Filtros por categoría, prioridad y estado.
+4. El botón para crear tickets tiene que dar feedback mientras se está creando el ticket, tiene que darle al usuario la sensación de que se está haciendo algo.
 
 `GET /{id}` devuelve una página HTML con:
 
