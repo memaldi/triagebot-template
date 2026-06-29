@@ -13,7 +13,9 @@
   <tbody id="tickets-table-body" class="divide-y divide-slate-100">
     {% for ticket in tickets %}
     <tr class="hover:bg-slate-50">
-      <td class="px-3 py-2 text-sm text-slate-500">{{ ticket.id }}</td>
+      <td class="px-3 py-2 text-sm text-slate-500">
+        <a href="/tickets/{{ ticket.id }}" class="text-blue-600 hover:underline">{{ ticket.id }}</a>
+      </td>
       <td class="px-3 py-2 text-sm font-medium">{{ ticket.title }}</td>
       <td class="px-3 py-2 text-sm">{{ ticket.category }}</td>
       <td class="px-3 py-2 text-sm font-semibold">{{ ticket.priority }}</td>

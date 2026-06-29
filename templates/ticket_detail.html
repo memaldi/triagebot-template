@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ticket #{{ ticket.id }} — TriageBot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <main class="mx-auto max-w-2xl p-6 space-y-6">
+
+    <div class="flex items-center gap-3">
+      <a href="/" class="text-blue-600 text-sm hover:underline">← Volver al tablero</a>
+    </div>
+
+    <h1 class="text-2xl font-bold">Ticket #{{ ticket.id }}</h1>
+
+    <!-- Detalles de solo lectura -->
+    <section class="bg-white rounded-lg p-4 shadow-sm ring-1 ring-slate-200 space-y-2 text-sm">
+      <div class="grid grid-cols-2 gap-2">
+        <span class="text-slate-500">Categoría</span><span class="font-medium">{{ ticket.category }}</span>
+        <span class="text-slate-500">Prioridad</span><span class="font-medium">{{ ticket.priority }}</span>
+        <span class="text-slate-500">Estado</span><span id="current-status" class="font-medium">{{ ticket.status }}</span>
+        <span class="text-slate-500">Tags</span><span>{{ ticket.tags | join(", ") or "—" }}</span>
+        <span class="text-slate-500">Creado</span><span>{{ ticket.created_at[:19] }}</span>
+        <span class="text-slate-500">Actualizado</span><span>{{ ticket.updated_at[:19] }}</span>
+      </div>
+    </section>
+
+    <!-- Formulario de edición -->
+    <section class="bg-white rounded-lg p-4 shadow-sm ring-1 ring-slate-200">
+      <h2 class="text-lg font-semibold mb-3">Editar ticket</h2>
+      <form id="edit-form" class="space-y-3">
+        <input id="edit-title" type="text" value="{{ ticket.title }}" required
+          class="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <textarea id="edit-description" rows="4" required
+          class="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ ticket.description }}</textarea>
+        <div class="flex gap-2 items-center">
+          <button type="submit"
+            class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">Guardar cambios</button>
+          <span id="edit-msg" class="text-sm text-slate-500"></span>
+        </div>
+      </form>
+    </section>
+
+    <!-- Formulario de cambio de estado -->
+    <section class="bg-white rounded-lg p-4 shadow-sm ring-1 ring-slate-200">
+      <h2 class="text-lg font-semibold mb-3">Cambiar estado</h2>
+      <form id="status-form" class="flex gap-3 items-center">
+        <select id="status-select" class="border border-slate-300 rounded px-2 py-2 text-sm">
+          <option value="open" {% if ticket.status == "open" %}selected{% endif %}>Open</option>
+          <option value="in_progress" {% if ticket.status == "in_progress" %}selected{% endif %}>In Progress</option>
+          <option value="closed" {% if ticket.status == "closed" %}selected{% endif %}>Closed</option>
+        </select>
+        <button type="submit"
+          class="bg-slate-700 text-white px-4 py-2 rounded text-sm hover:bg-slate-800">Actualizar</button>
+        <span id="status-msg" class="text-sm text-slate-500"></span>
+      </form>
+    </section>
+
+    <!-- Eliminar ticket -->
+    <section class="bg-white rounded-lg p-4 shadow-sm ring-1 ring-red-100">
+      <h2 class="text-lg font-semibold mb-3 text-red-700">Eliminar ticket</h2>
+      <button id="delete-btn"
+        class="bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700">Eliminar este ticket</button>
+    </section>
+
+  </main>
+
+  <script>
+    const TICKET_ID = {{ ticket.id }};
+
+    async function patch(data) {
+      return fetch(`/tickets/${TICKET_ID}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+    }
+
+    document.getElementById('edit-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const resp = await patch({
+        title: document.getElementById('edit-title').value,
+        description: document.getElementById('edit-description').value,
+      });
+      const msg = document.getElementById('edit-msg');
+      msg.textContent = resp.ok ? 'Guardado.' : 'Error al guardar.';
+      msg.className = resp.ok ? 'text-sm text-green-600' : 'text-sm text-red-600';
+    });
+
+    document.getElementById('status-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const status = document.getElementById('status-select').value;
+      const resp = await patch({ status });
+      const msg = document.getElementById('status-msg');
+      if (resp.ok) {
+        document.getElementById('current-status').textContent = status;
+        msg.textContent = 'Estado actualizado.';
+        msg.className = 'text-sm text-green-600';
+      } else {
+        msg.textContent = 'Error al actualizar.';
+        msg.className = 'text-sm text-red-600';
+      }
+    });
+
+    document.getElementById('delete-btn').addEventListener('click', async function () {
+      if (!confirm('¿Seguro que quieres eliminar este ticket?')) return;
+      const resp = await fetch(`/tickets/${TICKET_ID}`, { method: 'DELETE' });
+      if (resp.ok) {
+        window.location.href = '/';
+      }
+    });
+  </script>
+</body>
+</html>

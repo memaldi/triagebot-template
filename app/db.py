@@ -91,3 +91,10 @@ def update_ticket(ticket_id: int, **kwargs) -> dict | None:
     with get_connection() as conn:
         conn.execute(f"UPDATE tickets SET {set_clause} WHERE id = ?", values)  # noqa: S608
     return get_ticket(ticket_id)
+
+
+def delete_ticket(ticket_id: int) -> bool:
+    logger.debug("delete_ticket: id=%s", ticket_id)
+    with get_connection() as conn:
+        result = conn.execute("DELETE FROM tickets WHERE id = ?", (ticket_id,))
+    return result.rowcount > 0
