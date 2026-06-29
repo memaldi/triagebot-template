@@ -49,7 +49,9 @@ def test_post_ticket_creates_ticket_with_classification(client, monkeypatch):
 def test_created_ticket_is_persisted_and_listed(client, monkeypatch):
     monkeypatch.setattr(
         "app.classifier.classify_ticket",
-        lambda title, description: fake_classification(category="feature_request", priority="P2", tags=["export"]),
+        lambda title, description: fake_classification(
+            category="feature_request", priority="P2", tags=["export"]
+        ),
     )
 
     created = client.post(
@@ -106,7 +108,9 @@ def test_classifier_failure_uses_safe_fallback(client, monkeypatch):
 def test_update_ticket_and_filter_by_status_priority_category(client, monkeypatch):
     monkeypatch.setattr(
         "app.classifier.classify_ticket",
-        lambda title, description: fake_classification(category="urgent", priority="P1", tags=["demo"]),
+        lambda title, description: fake_classification(
+            category="urgent", priority="P1", tags=["demo"]
+        ),
     )
 
     created = client.post(
@@ -119,12 +123,18 @@ def test_update_ticket_and_filter_by_status_priority_category(client, monkeypatc
     assert created.status_code == 201
     ticket_id = created.json()["id"]
 
-    patched = client.patch(f"/tickets/{ticket_id}", json={"status": "in_progress", "priority": "P2"})
+    patched = client.patch(
+        f"/tickets/{ticket_id}", 
+        json={"status": "in_progress", "priority": "P2"}
+    )
     assert patched.status_code == 200
     assert patched.json()["status"] == "in_progress"
     assert patched.json()["priority"] == "P2"
 
-    filtered = client.get("/tickets", params={"category": "urgent", "priority": "P2", "status": "in_progress"})
+    filtered = client.get(
+        "/tickets", 
+        params={"category": "urgent", "priority": "P2", "status": "in_progress"}
+    )
     assert filtered.status_code == 200
     tickets = filtered.json()
     assert len(tickets) == 1
