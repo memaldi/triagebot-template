@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.requests import Request
 from fastapi.responses import HTMLResponse
@@ -6,6 +8,7 @@ from fastapi.templating import Jinja2Templates
 from app import classifier, db
 from app.models import TicketCreate, TicketUpdate
 
+logger = logging.getLogger(__name__)
 templates = Jinja2Templates(directory="templates")
 
 app = FastAPI(title="TriageBot")
@@ -18,6 +21,7 @@ def health() -> dict[str, str]:
 
 @app.post("/tickets", status_code=201)
 def create_ticket(payload: TicketCreate) -> dict:
+    logger.debug("POST /tickets title=%.80s", payload.title)
     try:
         classification = classifier.classify_ticket(payload.title, payload.description)
     except Exception:
@@ -45,6 +49,7 @@ def update_ticket(ticket_id: int, payload: TicketUpdate) -> dict:
     updates = payload.model_dump(exclude_none=True)
     ticket = db.update_ticket(ticket_id, **updates)
     if ticket is None:
+        logger.error("PATCH /tickets/%s — ticket not found", ticket_id)
         raise HTTPException(status_code=404, detail="Ticket not found")
     return ticket
 
