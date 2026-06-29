@@ -39,7 +39,7 @@ Valores por defecto:
 
 1. Detalles del ticket.
 2. Formulario para modificar el ticket.
-3. Formulario para cambiar el estado del ticket.
+3. Formulario para cambiar el estado, la categoría y los tags del ticket.
 4. Botón para eliminar el ticket.
 
 `DELETE /{id}` elimina el ticket seleccionado.

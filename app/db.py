@@ -85,6 +85,8 @@ def update_ticket(ticket_id: int, **kwargs) -> dict | None:
     if not kwargs:
         return get_ticket(ticket_id)
     now = datetime.now(UTC).isoformat()
+    if "tags" in kwargs and isinstance(kwargs["tags"], list):
+        kwargs["tags"] = json.dumps(kwargs["tags"])
     kwargs["updated_at"] = now
     set_clause = ", ".join(f"{k} = ?" for k in kwargs)
     values = list(kwargs.values()) + [ticket_id]
