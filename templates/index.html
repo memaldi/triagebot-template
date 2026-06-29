@@ -49,8 +49,17 @@
           class="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
         <textarea id="ticket-description" name="description" rows="3" placeholder="Descripción" required
           class="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-        <button type="submit"
-          class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">Crear ticket</button>
+        <div class="flex items-center gap-3">
+          <button id="create-ticket-btn" type="submit"
+            class="inline-flex items-center bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
+            <svg id="create-ticket-spinner" class="hidden h-4 w-4 mr-2 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity="0.3" stroke-width="4"></circle>
+              <path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" stroke-width="4" stroke-linecap="round"></path>
+            </svg>
+            <span id="create-ticket-btn-text">Crear ticket</span>
+          </button>
+          <span id="create-ticket-feedback" class="text-sm text-slate-500" aria-live="polite"></span>
+        </div>
       </form>
     </section>
 
@@ -112,16 +121,41 @@
     if (newTicketForm) {
       newTicketForm.addEventListener('submit', async function (e) {
         e.preventDefault();
+        const submitButton = document.getElementById('create-ticket-btn');
+        const spinner = document.getElementById('create-ticket-spinner');
+        const buttonText = document.getElementById('create-ticket-btn-text');
+        const feedback = document.getElementById('create-ticket-feedback');
         const title = document.getElementById('ticket-title').value;
         const description = document.getElementById('ticket-description').value;
-        const resp = await fetch('/tickets', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, description }),
-        });
-        if (resp.ok) {
-          this.reset();
-          htmx.ajax('GET', '/tickets-table', { target: '#tickets-table', swap: 'innerHTML' });
+
+        submitButton.disabled = true;
+        spinner.classList.remove('hidden');
+        buttonText.textContent = 'Creando...';
+        feedback.textContent = 'Creando ticket...';
+        feedback.className = 'text-sm text-blue-600';
+
+        try {
+          const resp = await fetch('/tickets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, description }),
+          });
+          if (resp.ok) {
+            this.reset();
+            feedback.textContent = 'Ticket creado.';
+            feedback.className = 'text-sm text-green-600';
+            htmx.ajax('GET', '/tickets-table', { target: '#tickets-table', swap: 'innerHTML' });
+          } else {
+            feedback.textContent = 'Error al crear ticket.';
+            feedback.className = 'text-sm text-red-600';
+          }
+        } catch (error) {
+          feedback.textContent = 'Error de red al crear ticket.';
+          feedback.className = 'text-sm text-red-600';
+        } finally {
+          submitButton.disabled = false;
+          spinner.classList.add('hidden');
+          buttonText.textContent = 'Crear ticket';
         }
       });
     }
