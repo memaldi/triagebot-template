@@ -53,6 +53,10 @@ Los tests comprueban:
 4. Si el clasificador falla, se aplica fallback y la app no cae.
 5. Se puede actualizar estado/prioridad y filtrar tickets.
 
+## 5. Logging
+
+El código debe mostrar trazas de error y de debug por la terminal. El nivel de debug debe poder ser parametrizable a través de un fichero de configuración.
+
 ## 8. No negociable
 
 - No commitear `.env`.

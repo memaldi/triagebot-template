@@ -1,5 +1,8 @@
 import json
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 FALLBACK_CLASSIFICATION = {"category": "question", "priority": "P3", "tags": []}
 
@@ -12,6 +15,7 @@ def classify_ticket(title: str, description: str) -> dict:
     try:
         from openai import OpenAI
 
+        logger.debug("Classifying ticket: %.80s", title)
         client = OpenAI(
             base_url="https://openrouter.ai/api/v1",
             api_key=os.environ["OPENROUTER_API_KEY"],
@@ -34,9 +38,19 @@ def classify_ticket(title: str, description: str) -> dict:
         priority = data.get("priority")
         tags = data.get("tags", [])
         if category not in _ALLOWED_CATEGORIES or priority not in _ALLOWED_PRIORITIES:
+            logger.error(
+                "LLM returned invalid category/priority: %s / %s — using fallback",
+                category,
+                priority,
+            )
             return FALLBACK_CLASSIFICATION
         if not isinstance(tags, list):
             tags = []
-        return {"category": category, "priority": priority, "tags": [str(t) for t in tags]}
+        result = {"category": category, "priority": priority, "tags": [str(t) for t in tags]}
+        logger.debug(
+            "Classification result: category=%s priority=%s tags=%s", category, priority, tags
+        )
+        return result
     except Exception:
+        logger.error("Classifier failed — applying fallback", exc_info=True)
         return FALLBACK_CLASSIFICATION

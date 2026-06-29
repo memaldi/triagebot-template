@@ -1,7 +1,10 @@
-import datetime
 import json
+import logging
 import os
 import sqlite3
+from datetime import UTC, datetime
+
+logger = logging.getLogger(__name__)
 
 
 def get_db_path() -> str:
@@ -36,11 +39,12 @@ def _row_to_dict(row: sqlite3.Row) -> dict:
 
 
 def create_ticket(title: str, description: str, category: str, priority: str, tags: list) -> dict:
-    now = datetime.datetime.now(datetime.UTC).isoformat()
+    logger.debug("create_ticket: title=%.80s category=%s priority=%s", title, category, priority)
+    now = datetime.now(UTC).isoformat()
     with get_connection() as conn:
         cursor = conn.execute(
-            "INSERT INTO tickets (title, description, category, priority, " \
-            "tags, status, created_at, updated_at)"
+            "INSERT INTO tickets"
+            " (title, description, category, priority, tags, status, created_at, updated_at)"
             " VALUES (?, ?, ?, ?, ?, 'open', ?, ?)",
             (title, description, category, priority, json.dumps(tags), now, now),
         )
@@ -56,8 +60,10 @@ def get_ticket(ticket_id: int) -> dict | None:
     return _row_to_dict(row)
 
 
-def list_tickets(category: str | None = None, priority: str | None = None, 
-                 status: str | None = None) -> list[dict]:
+def list_tickets(
+    category: str | None = None, priority: str | None = None, status: str | None = None
+) -> list[dict]:
+    logger.debug("list_tickets: category=%s priority=%s status=%s", category, priority, status)
     query = "SELECT * FROM tickets WHERE 1=1"
     params: list = []
     if category:
@@ -75,9 +81,10 @@ def list_tickets(category: str | None = None, priority: str | None = None,
 
 
 def update_ticket(ticket_id: int, **kwargs) -> dict | None:
+    logger.debug("update_ticket: id=%s fields=%s", ticket_id, list(kwargs.keys()))
     if not kwargs:
         return get_ticket(ticket_id)
-    now = datetime.datetime.now(datetime.UTC).isoformat()
+    now = datetime.now(UTC).isoformat()
     kwargs["updated_at"] = now
     set_clause = ", ".join(f"{k} = ?" for k in kwargs)
     values = list(kwargs.values()) + [ticket_id]
