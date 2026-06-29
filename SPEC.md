@@ -37,7 +37,7 @@ Valores por defecto:
 
 `GET /{id}` devuelve una página HTML con:
 
-1. Detalles del ticket.
+1. Detalles del ticket (incluyendo su autor).
 2. Formulario para modificar el ticket.
 3. Formulario para cambiar el estado, la categoría y los tags del ticket.
 4. Botón para eliminar el ticket.
@@ -61,6 +61,14 @@ Los tests comprueban:
 3. Input inválido devuelve `422`.
 4. Si el clasificador falla, se aplica fallback y la app no cae.
 5. Se puede actualizar estado/prioridad y filtrar tickets.
+
+## 6. Autenticación
+
+1. El sistema debe permitir la autenticación y autorización. 
+2. El creador del ticket debe ser el único que puede ver sus propios tickets, modificarlos y eliminarlos.
+3. Existirán usuarios administradores que verán todos los tickets y los podrán modificar y eliminar.
+4. La gestión de los usuarios debe hacerse en la base de datos.
+
 
 ## 5. Logging
 

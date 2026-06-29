@@ -24,10 +24,15 @@ def get_connection() -> sqlite3.Connection:
             priority TEXT NOT NULL,
             tags TEXT NOT NULL DEFAULT '[]',
             status TEXT NOT NULL DEFAULT 'open',
+            author TEXT NOT NULL DEFAULT 'anonymous',
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL
         )
     """)
+    try:
+        conn.execute("ALTER TABLE tickets ADD COLUMN author TEXT NOT NULL DEFAULT 'anonymous'")
+    except sqlite3.OperationalError:
+        pass
     conn.commit()
     return conn
 
@@ -38,15 +43,30 @@ def _row_to_dict(row: sqlite3.Row) -> dict:
     return d
 
 
-def create_ticket(title: str, description: str, category: str, priority: str, tags: list) -> dict:
-    logger.debug("create_ticket: title=%.80s category=%s priority=%s", title, category, priority)
+
+def create_ticket(
+    title: str,
+    description: str,
+    category: str,
+    priority: str,
+    tags: list,
+    author: str = "anonymous",
+) -> dict:
+    logger.debug(
+        "create_ticket: title=%.80s category=%s priority=%s author=%s",
+        title,
+        category,
+        priority,
+        author,
+    )
     now = datetime.now(UTC).isoformat()
     with get_connection() as conn:
         cursor = conn.execute(
             "INSERT INTO tickets"
-            " (title, description, category, priority, tags, status, created_at, updated_at)"
-            " VALUES (?, ?, ?, ?, ?, 'open', ?, ?)",
-            (title, description, category, priority, json.dumps(tags), now, now),
+            " (title, description, category, priority, tags, status,"
+            " author, created_at, updated_at)"
+            " VALUES (?, ?, ?, ?, ?, 'open', ?, ?, ?)",
+            (title, description, category, priority, json.dumps(tags), author, now, now),
         )
         row_id = cursor.lastrowid
     return get_ticket(row_id)

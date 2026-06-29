@@ -7,6 +7,15 @@ ALLOWED_PRIORITIES = {"P1", "P2", "P3"}
 ALLOWED_STATUSES = {"open", "in_progress", "closed"}
 
 
+class User(BaseModel):
+    username: str
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
 class TicketCreate(BaseModel):
     title: str
     description: str
@@ -71,5 +80,6 @@ class Ticket(BaseModel):
     priority: str
     tags: list[str]
     status: str
+    author: str
     created_at: datetime
     updated_at: datetime

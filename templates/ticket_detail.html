@@ -18,6 +18,7 @@
     <!-- Detalles de solo lectura -->
     <section class="bg-white rounded-lg p-4 shadow-sm ring-1 ring-slate-200 space-y-2 text-sm">
       <div class="grid grid-cols-2 gap-2">
+        <span class="text-slate-500">Autor</span><span class="font-medium">{{ ticket.author }}</span>
         <span class="text-slate-500">Categoría</span><span id="current-category" class="font-medium">{{ ticket.category }}</span>
         <span class="text-slate-500">Prioridad</span><span class="font-medium">{{ ticket.priority }}</span>
         <span class="text-slate-500">Estado</span><span id="current-status" class="font-medium">{{ ticket.status }}</span>
@@ -26,6 +27,8 @@
         <span class="text-slate-500">Actualizado</span><span>{{ ticket.updated_at[:19] }}</span>
       </div>
     </section>
+
+    {% if current_user and (current_user == ticket.author or current_user == "admin") %}
 
     <!-- Formulario de edición -->
     <section class="bg-white rounded-lg p-4 shadow-sm ring-1 ring-slate-200">
@@ -85,6 +88,11 @@
       <button id="delete-btn"
         class="bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700">Eliminar este ticket</button>
     </section>
+    {% else %}
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+      <p class="text-sm text-yellow-800">Solo el creador del ticket o un administrador puede editar o eliminar este ticket.</p>
+    </div>
+    {% endif %}
 
   </main>
 
