@@ -10,6 +10,7 @@ TriageBot permite:
 
 - Crear tickets con `title` y `description`.
 - Clasificarlos automáticamente con Claude en:
+ - Clasificarlos automáticamente con LLM en:
   - `category`: `bug`, `feature_request`, `question`, `urgent`
   - `priority`: `P1`, `P2`, `P3`
   - `tags`: lista de etiquetas cortas.
@@ -25,7 +26,7 @@ TriageBot permite:
 | Backend | FastAPI |
 | Datos | SQLite |
 | Frontend | HTML + HTMX + Tailwind CDN |
-| LLM | Claude vía API de Anthropic |
+| LLM | OpenRouter (`gpt-oss-120b`) vía SDK OpenAI |
 | Tests | pytest |
 | CI/CD | GitHub Actions |
 | IDE + IA | VS Code + Claude Code |
@@ -45,7 +46,17 @@ cp .env.example .env
 Edita `.env` y añade tu API key:
 
 ```bash
-ANTHROPIC_API_KEY=sk-ant-...
+OPENROUTER_API_KEY=...
+```
+
+Opcionalmente puedes ajustar usuarios demo y base de datos:
+
+```bash
+DATABASE_URL=sqlite:///triagebot.db
+ADMIN_USER=admin
+ADMIN_PASS=admin123
+USER_USER=user
+USER_PASS=user123
 ```
 
 Comprueba que `.env` está ignorado por Git:

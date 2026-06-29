@@ -1,26 +1,27 @@
 import logging
-import os
+from hmac import compare_digest
 
 from fastapi import HTTPException, Request
+
+from app import db
 
 logger = logging.getLogger(__name__)
 
 
 def validate_credentials(username: str, password: str) -> bool:
-    """Validate username and password against hardcoded credentials from environment."""
-    admin_user = os.getenv("ADMIN_USER", "admin")
-    admin_pass = os.getenv("ADMIN_PASS", "admin123")
-    user_user = os.getenv("USER_USER", "user")
-    user_pass = os.getenv("USER_PASS", "user123")
-
-    valid_creds = {admin_user: admin_pass, user_user: user_pass}
-    return valid_creds.get(username) == password
+    """Validate username and password against persisted users in the database."""
+    user = db.get_user(username)
+    if not user:
+        return False
+    expected_hash = user["password_hash"]
+    actual_hash = db.hash_password(password)
+    return compare_digest(expected_hash, actual_hash)
 
 
 def is_admin(username: str) -> bool:
-    """Check if username is an admin."""
-    admin_user = os.getenv("ADMIN_USER", "admin")
-    return username == admin_user
+    """Check if username has admin role in database."""
+    user = db.get_user(username)
+    return bool(user and user.get("role") == "admin")
 
 
 def get_current_user(request: Request) -> str | None:

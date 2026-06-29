@@ -57,11 +57,15 @@ def create_ticket(request: Request, payload: TicketCreate) -> dict:
 
 @app.get("/tickets")
 def list_tickets(
+    request: Request,
     category: str | None = Query(default=None),
     priority: str | None = Query(default=None),
     status: str | None = Query(default=None),
 ) -> list:
-    return db.list_tickets(category=category, priority=priority, status=status)
+    current_user = auth.get_current_user(request)
+    viewer = current_user or "anonymous"
+    author = None if auth.is_admin(viewer) else viewer
+    return db.list_tickets(category=category, priority=priority, status=status, author=author)
 
 
 @app.patch("/tickets/{ticket_id}")
@@ -90,13 +94,20 @@ def delete_ticket(request: Request, ticket_id: int) -> Response:
 
 @app.get("/tickets/{ticket_id}", response_class=HTMLResponse)
 def ticket_detail(request: Request, ticket_id: int) -> HTMLResponse:
-    current_user = auth.get_current_user(request)
+    current_user = auth.get_current_user(request) or "anonymous"
     ticket = db.get_ticket(ticket_id)
     if ticket is None:
         raise HTTPException(status_code=404, detail="Ticket not found")
+    auth.require_owner_or_admin(ticket["author"], current_user)
+    can_manage = current_user == ticket["author"] or auth.is_admin(current_user)
     return templates.TemplateResponse(
         "ticket_detail.html",
-        {"request": request, "ticket": ticket, "current_user": current_user},
+        {
+            "request": request,
+            "ticket": ticket,
+            "current_user": current_user,
+            "can_manage": can_manage,
+        },
     )
 
 
@@ -107,7 +118,10 @@ def tickets_table(
     priority: str | None = Query(default=None),
     status: str | None = Query(default=None),
 ) -> HTMLResponse:
-    tickets = db.list_tickets(category=category, priority=priority, status=status)
+    current_user = auth.get_current_user(request)
+    viewer = current_user or "anonymous"
+    author = None if auth.is_admin(viewer) else viewer
+    tickets = db.list_tickets(category=category, priority=priority, status=status, author=author)
     return templates.TemplateResponse(
         "_tickets_table.html",
         {"request": request, "tickets": tickets},
@@ -122,7 +136,9 @@ def index(
     status: str | None = Query(default=None),
 ) -> HTMLResponse:
     current_user = auth.get_current_user(request)
-    tickets = db.list_tickets(category=category, priority=priority, status=status)
+    viewer = current_user or "anonymous"
+    author = None if auth.is_admin(viewer) else viewer
+    tickets = db.list_tickets(category=category, priority=priority, status=status, author=author)
     return templates.TemplateResponse(
         "index.html",
         {
