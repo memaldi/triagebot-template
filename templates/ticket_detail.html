@@ -18,14 +18,17 @@
     <!-- Detalles de solo lectura -->
     <section class="bg-white rounded-lg p-4 shadow-sm ring-1 ring-slate-200 space-y-2 text-sm">
       <div class="grid grid-cols-2 gap-2">
+        <span class="text-slate-500">Autor</span><span class="font-medium">{{ ticket.author }}</span>
         <span class="text-slate-500">Categoría</span><span id="current-category" class="font-medium">{{ ticket.category }}</span>
-        <span class="text-slate-500">Prioridad</span><span class="font-medium">{{ ticket.priority }}</span>
+        <span class="text-slate-500">Prioridad</span><span id="current-priority" class="font-medium">{{ ticket.priority }}</span>
         <span class="text-slate-500">Estado</span><span id="current-status" class="font-medium">{{ ticket.status }}</span>
         <span class="text-slate-500">Tags</span><span id="current-tags">{{ ticket.tags | join(", ") or "—" }}</span>
         <span class="text-slate-500">Creado</span><span>{{ ticket.created_at[:19] }}</span>
         <span class="text-slate-500">Actualizado</span><span>{{ ticket.updated_at[:19] }}</span>
       </div>
     </section>
+
+    {% if can_manage %}
 
     <!-- Formulario de edición -->
     <section class="bg-white rounded-lg p-4 shadow-sm ring-1 ring-slate-200">
@@ -65,6 +68,14 @@
               <option value="closed" {% if ticket.status == "closed" %}selected{% endif %}>Closed</option>
             </select>
           </div>
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">Prioridad</label>
+            <select id="priority-select" class="w-full border border-slate-300 rounded px-3 py-2 text-sm">
+              <option value="P1" {% if ticket.priority == "P1" %}selected{% endif %}>P1</option>
+              <option value="P2" {% if ticket.priority == "P2" %}selected{% endif %}>P2</option>
+              <option value="P3" {% if ticket.priority == "P3" %}selected{% endif %}>P3</option>
+            </select>
+          </div>
         </div>
         <div>
           <label class="block text-sm text-slate-600 mb-1">Tags (separados por coma)</label>
@@ -85,6 +96,11 @@
       <button id="delete-btn"
         class="bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700">Eliminar este ticket</button>
     </section>
+    {% else %}
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+      <p class="text-sm text-yellow-800">Solo el creador del ticket o un administrador puede editar o eliminar este ticket.</p>
+    </div>
+    {% endif %}
 
   </main>
 
@@ -99,49 +115,60 @@
       });
     }
 
-    document.getElementById('edit-form').addEventListener('submit', async function (e) {
-      e.preventDefault();
-      const resp = await patch({
-        title: document.getElementById('edit-title').value,
-        description: document.getElementById('edit-description').value,
+    const editForm = document.getElementById('edit-form');
+    if (editForm) {
+      editForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const resp = await patch({
+          title: document.getElementById('edit-title').value,
+          description: document.getElementById('edit-description').value,
+        });
+        const msg = document.getElementById('edit-msg');
+        msg.textContent = resp.ok ? 'Guardado.' : 'Error al guardar.';
+        msg.className = resp.ok ? 'text-sm text-green-600' : 'text-sm text-red-600';
       });
-      const msg = document.getElementById('edit-msg');
-      msg.textContent = resp.ok ? 'Guardado.' : 'Error al guardar.';
-      msg.className = resp.ok ? 'text-sm text-green-600' : 'text-sm text-red-600';
-    });
+    }
 
-    document.getElementById('classification-form').addEventListener('submit', async function (e) {
-      e.preventDefault();
-      const tagsText = document.getElementById('tags-input').value;
-      const tags = tagsText
-        .split(',')
-        .map(t => t.trim())
-        .filter(t => t.length > 0);
-      const resp = await patch({
-        category: document.getElementById('category-select').value,
-        status: document.getElementById('status-select').value,
-        tags,
+    const classificationForm = document.getElementById('classification-form');
+    if (classificationForm) {
+      classificationForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const tagsText = document.getElementById('tags-input').value;
+        const tags = tagsText
+          .split(',')
+          .map(t => t.trim())
+          .filter(t => t.length > 0);
+        const resp = await patch({
+          category: document.getElementById('category-select').value,
+          status: document.getElementById('status-select').value,
+          priority: document.getElementById('priority-select').value,
+          tags,
+        });
+        const msg = document.getElementById('classification-msg');
+        if (resp.ok) {
+          document.getElementById('current-category').textContent = document.getElementById('category-select').value;
+          document.getElementById('current-status').textContent = document.getElementById('status-select').value;
+          document.getElementById('current-priority').textContent = document.getElementById('priority-select').value;
+          document.getElementById('current-tags').textContent = tags.length > 0 ? tags.join(', ') : '—';
+          msg.textContent = 'Guardado.';
+          msg.className = 'text-sm text-green-600';
+        } else {
+          msg.textContent = 'Error al guardar.';
+          msg.className = 'text-sm text-red-600';
+        }
       });
-      const msg = document.getElementById('classification-msg');
-      if (resp.ok) {
-        document.getElementById('current-category').textContent = document.getElementById('category-select').value;
-        document.getElementById('current-status').textContent = document.getElementById('status-select').value;
-        document.getElementById('current-tags').textContent = tags.length > 0 ? tags.join(', ') : '—';
-        msg.textContent = 'Guardado.';
-        msg.className = 'text-sm text-green-600';
-      } else {
-        msg.textContent = 'Error al guardar.';
-        msg.className = 'text-sm text-red-600';
-      }
-    });
+    }
 
-    document.getElementById('delete-btn').addEventListener('click', async function () {
-      if (!confirm('¿Seguro que quieres eliminar este ticket?')) return;
-      const resp = await fetch(`/tickets/${TICKET_ID}`, { method: 'DELETE' });
-      if (resp.ok) {
-        window.location.href = '/';
-      }
-    });
+    const deleteBtn = document.getElementById('delete-btn');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', async function () {
+        if (!confirm('¿Seguro que quieres eliminar este ticket?')) return;
+        const resp = await fetch(`/tickets/${TICKET_ID}`, { method: 'DELETE' });
+        if (resp.ok) {
+          window.location.href = '/';
+        }
+      });
+    }
   </script>
 </body>
 </html>

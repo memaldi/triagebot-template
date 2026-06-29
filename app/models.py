@@ -7,6 +7,15 @@ ALLOWED_PRIORITIES = {"P1", "P2", "P3"}
 ALLOWED_STATUSES = {"open", "in_progress", "closed"}
 
 
+class User(BaseModel):
+    username: str
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
 class TicketCreate(BaseModel):
     title: str
     description: str
@@ -29,10 +38,32 @@ class TicketCreate(BaseModel):
 
 
 class TicketUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
     status: str | None = None
     priority: str | None = None
     category: str | None = None
     tags: list[str] | None = None
+
+    @field_validator("title")
+    @classmethod
+    def validate_title(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        v = v.strip()
+        if not v or len(v) > 200:
+            raise ValueError("title must be 1–200 characters after trim")
+        return v
+
+    @field_validator("description")
+    @classmethod
+    def validate_description(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        v = v.strip()
+        if not v or len(v) > 5000:
+            raise ValueError("description must be 1–5000 characters after trim")
+        return v
 
     @field_validator("status")
     @classmethod
@@ -71,5 +102,6 @@ class Ticket(BaseModel):
     priority: str
     tags: list[str]
     status: str
+    author: str
     created_at: datetime
     updated_at: datetime
